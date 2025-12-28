@@ -452,7 +452,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
   redis:
     image: redis:7-alpine
@@ -475,7 +475,7 @@ services:
       DB_HOST: postgres
       REDIS_HOST: redis
     ports:
-      - "3000:3000"
+      - "8005:8005"
     depends_on:
       - postgres
       - redis
@@ -483,7 +483,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "80:80"
+      - "5175:80"
     depends_on:
       - backend
 
@@ -495,10 +495,10 @@ volumes:
 
 ```env
 NODE_ENV=production
-PORT=3000
+PORT=8005
 
 DB_HOST=postgres
-DB_PORT=5432
+DB_PORT=5435
 DB_USERNAME=postgres
 DB_PASSWORD=your-secure-password
 DB_DATABASE=patent_management

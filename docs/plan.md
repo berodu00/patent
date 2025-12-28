@@ -72,50 +72,52 @@
   - [x] User 엔티티 및 Repository (TypeORM)
   - [x] Passport 전략 (Local, JWT) 구현
   - [x] Auth Module (Login/Register/Profile API)
-- [ ] **Frontend Auth**/login` API 구현 (TDD)
+- [ ] **Advanced Auth** (Deferred)
   - [ ] `POST /auth/refresh` API 구현
-- [ ] **Frontend Auth**
-  - [ ] 로그인 페이지 UI 구현
-  - [ ] RTK Query `authApi` 생성 (Login/Refresh)
-  - [ ] `ProtectedRoute` 컴포넌트 구현 (권한 제어)
+- [x] **Frontend Auth**
+  - [x] 로그인 페이지 UI 구현
+  - [x] 회원가입 페이지 UI 구현
+  - [x] Redux Auth Slice (Token 관리) 구현
+  - [x] Axios Interceptor (Token 자동 첨부) 설정
+  - [x] Protected Route 컴포넌트 구현 (권한 제어)
 
 ### Milestone 3: 특허 관리 코어 (CRUD)
-- [ ] **Backend Patent Core**
-  - [ ] `Patent` Entity 생성 및 Migration
-  - [ ] `PatentsModule` 생성
-  - [ ] `POST /patents` (특허 생성) API 구현 (TDD)
-  - [ ] `GET /patents` (목록 조회) API 구현 (검색, 페이징)
-  - [ ] `GET /patents/:id` (상세 조회) API 구현
-  - [ ] `PUT /patents/:id` (수정) API 구현
-- [ ] **Frontend Patent Core**
-  - [ ] 특허 목록 페이지 (DataGrid) 구현
-  - [ ] 특허 등록/수정 Form (React Hook Form) 구현
-  - [ ] 특허 상세 페이지 구현
+- [x] **Backend Patent Core**
+  - [x] `Patent` Entity 생성 및 Migration
+  - [x] `PatentsModule` 생성
+  - [x] `POST /patents` (특허 생성) API 구현 (TDD)
+  - [x] `GET /patents` (목록 조회) API 구현 (검색, 페이징)
+  - [x] `GET /patents/:id` (상세 조회) API 구현
+  - [x] `PUT /patents/:id` (수정) API 구현
+- [x] **Frontend Patent Core**
+  - [x] 특허 목록 페이지 (DataGrid) 구현
+  - [x] 특허 등록/수정 Form (React Hook Form) 구현
+  - [x] 특허 상세 페이지 구현
 
 ### Milestone 4: 확장 기능 (국제출원, 비용, 파일)
-- [ ] **국제 출원 관리**
-  - [ ] `InternationalApplication` Entity & Migration
-  - [ ] 국제 출원 CRUD API 구현
-  - [ ] 특허 상세 페이지 내 국제 출원 탭 구현
-- [ ] **비용 관리**
-  - [ ] `CostItem` Entity & Migration
-  - [ ] 비용 내역 추가/조회 API 구현
-  - [ ] 특허 상세 내 비용 테이블 구현
-- [ ] **파일 첨부 시스템**
-  - [ ] MinIO 연동 서비스 (`StorageService`) 구현
-  - [ ] `Attachment` Entity & Migration
-  - [ ] 파일 업로드/다운로드 API 구현
-  - [ ] Frontend 파일 업로드 UI 구현
+- [x] **국제 출원 관리**
+  - [x] `InternationalApplication` Entity & Migration
+  - [x] 국제 출원 CRUD API 구현
+  - [x] 특허 상세 페이지 내 국제 출원 탭 구현
+- [x] **비용 관리**
+  - [x] `CostItem` Entity & Migration
+  - [x] 비용 내역 추가/조회 API 구현
+  - [x] 특허 상세 내 비용 테이블 구현
+- [x] **파일 첨부 시스템**
+  - [x] MinIO 연동 서비스 (`StorageService`) 구현
+  - [x] `Attachment` Entity & Migration
+  - [x] 파일 업로드/다운로드 API 구현
+  - [x] Frontend 파일 업로드 UI 구현
 
 ### Milestone 5: 외부 연동 및 대시보드
-- [ ] **KIPRIS 연동**
-  - [ ] `KiprisService` 및 `Axios` 설정
-  - [ ] 특허 번호로 KIPRIS 조회 기능 구현
-  - [ ] 스케줄러(Cron) 동기화 로직 구현
-- [ ] **대시보드**
-  - [ ] 대시보드 통계 API (`/dashboard/statistics`) 구현
-  - [ ] 대시보드 차트 API (`/dashboard/trends`) 구현
-  - [ ] Frontend 대시보드 레이아웃 및 차트(Recharts) 구현
+- [x] **KIPRIS 연동**
+  - [x] `KiprisService` 및 `Axios` 설정
+  - [x] 특허 번호로 KIPRIS 조회 기능 구현
+  - [x] 스케줄러(Cron) 동기화 로직 구현
+- [x] **대시보드**
+  - [x] 대시보드 통계 API (`/dashboard/statistics`) 구현
+  - [x] 대시보드 차트 API (`/dashboard/trends`) 구현
+  - [x] Frontend 대시보드 레이아웃 및 차트(Recharts) 구현
 
 ### Milestone 6: 안정화 및 배포
 - [ ] **통합 테스트**

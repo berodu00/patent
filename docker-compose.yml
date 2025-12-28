@@ -9,7 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5435:5432"
 
   redis:
     image: redis:7-alpine
@@ -32,7 +32,7 @@ services:
       DB_HOST: postgres
       REDIS_HOST: redis
     ports:
-      - "3000:3000"
+      - "8005:8005"
     depends_on:
       - postgres
       - redis
