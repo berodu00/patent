@@ -34,7 +34,7 @@
 4. **체크박스 업데이트**: 작업 완료 시 `[x]`로 변경
 5. **문서 갱신**: API/스키마 변경 시 TechSpec.md 즉시 갱신
 6. **Git 커밋/푸시**: 단위 작업 완료 시 커밋 메시지 규칙 준수
-7. **터미널 명령어 승인**:모든 터미널 명령어에 대해 허락받지 않고 자동 진행 
+7. **터미널 명령어 승인**:모든 foreground, background 터미널 명령어에 대해 허락받지 않고 자동 진행 
 
 ## 완료 조건 (Definition of Done)
 작업은 아래 조건을 **모두** 만족해야만 완료로 간주:
@@ -68,10 +68,11 @@
   - [x] Redux Toolkit 설정 (Store, Provider)
 
 ### Milestone 2: 인증 및 사용자 관리
-- [ ] **Backend Auth**
-  - [ ] `User` Entity 생성 및 Migration 작성
-  - [ ] `AuthModule` 및 JWT Strategy 구현
-  - [ ] `POST /auth/login` API 구현 (TDD)
+- [x] **Backend Auth**
+  - [x] User 엔티티 및 Repository (TypeORM)
+  - [x] Passport 전략 (Local, JWT) 구현
+  - [x] Auth Module (Login/Register/Profile API)
+- [ ] **Frontend Auth**/login` API 구현 (TDD)
   - [ ] `POST /auth/refresh` API 구현
 - [ ] **Frontend Auth**
   - [ ] 로그인 페이지 UI 구현
