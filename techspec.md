@@ -1,0 +1,662 @@
+## 📌 문서 성격 및 준수 사항
+
+**이 문서는 참고 자료가 아니라 "구속력 있는 계약서"입니다.**
+
+### 절대 기준
+- 모든 구현은 반드시 본 문서와 Plan.md를 100% 준수해야 한다
+- 요구사항 충돌, 모호함, 누락 발견 시 즉시 작업 중단 후 보고
+- 모든 산출물은 한국어로 작성
+
+### 범위 통제
+- 본 문서에 명시되지 않은 API, 컴포넌트, 필드, 테이블, 로직 생성 금지
+- 정의되지 않은 Request/Response 필드 추가 금지
+- 명시되지 않은 라이브러리, 프레임워크, 패턴 도입 금지
+- 명시적 지시 없는 개선, 리팩토링, 최적화, 확장 금지
+
+---
+
+## 1. 프로젝트 개요
+
+### 1.1 프로젝트 정보
+- **프로젝트명**: 특허관리 시스템
+- **클라이언트**: 고려아연 (KOREA ZINC)
+- **기간**: 2024.10 ~ 2025.03 (6개월)
+- **예산**: 80,000,000원
+- **개발인력**: 5.5 M/M
+
+### 1.2 핵심 요구사항
+1. 국내/해외 특허 통합 관리
+2. 특허청(KIPRIS) API 실시간 연동
+3. ERP 시스템 비용 자동 동기화
+4. 전자결재 시스템 연동
+5. 실시간 알림 및 마감일 관리
+6. 대시보드 및 통계 분석
+
+### 1.3 현재 특허 현황
+- **국내특허**: 10건 (출원준비 1, 출원신청 1, 심사중 1, 등록완료 7)
+- **해외특허**: 20건 (미국, 중국, 일본 등 8개국)
+- **주요 기술**: 동제련 기술 등 금속 제련 분야
+
+---
+
+## 2. 기술 스택
+
+### 2.1 Backend
+```yaml
+Language: TypeScript
+Runtime: Node.js 20 LTS
+Framework: NestJS 10.x
+Database: PostgreSQL 15.x
+ORM: TypeORM 0.3.x
+Cache/Queue: Redis 7.x + Bull
+Storage: MinIO (S3 Compatible)
+Auth: JWT + Passport
+Testing: Jest + Supertest
+API Docs: Swagger/OpenAPI
+```
+
+### 2.2 Frontend
+```yaml
+Framework: React 18 + TypeScript
+State: Redux Toolkit + RTK Query
+UI: Material-UI (MUI) v5
+Charts: Recharts, Chart.js
+Forms: React Hook Form + Yup
+Build: Vite 4.x
+```
+
+### 2.3 Infrastructure
+```yaml
+Container: Docker + Docker Compose
+Proxy: Nginx
+Monitoring: Prometheus + Grafana
+Logging: Winston
+Error Tracking: Sentry (optional)
+CI/CD: GitHub Actions
+```
+
+---
+
+## 3. 데이터베이스 설계
+
+### 3.1 ERD 개요
+```
+users (사용자)
+  ↓ 1:N
+patents (특허 마스터)
+  ├─→ international_applications (국제출원)
+  ├─→ patent_stages (진행단계)
+  ├─→ attachments (첨부파일)
+  ├─→ cost_items (비용내역)
+  └─→ related_documents (연관문서)
+  
+notifications (알림)
+sync_logs (동기화 로그)
+```
+
+### 3.2 테이블 스키마 (PostgreSQL)
+
+```sql
+-- 사용자 테이블
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    department VARCHAR(100),
+    role VARCHAR(50) CHECK (role IN ('ADMIN','MANAGER','INVENTOR','VIEWER')),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 특허 마스터
+CREATE TABLE patents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    application_number VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    description TEXT,
+    application_date DATE NOT NULL,
+    registration_date DATE,
+    status VARCHAR(50) CHECK (status IN (
+        'PREPARING','APPROVED','APPLIED','PUBLISHED',
+        'EXAMINING','REGISTERED','REJECTED','WITHDRAWN'
+    )),
+    applicant_id UUID REFERENCES users(id),
+    total_cost DECIMAL(15,2) DEFAULT 0,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP
+);
+
+-- 국제출원
+CREATE TABLE international_applications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patent_id UUID REFERENCES patents(id) ON DELETE CASCADE,
+    country_code VARCHAR(2) NOT NULL,
+    country_name VARCHAR(100) NOT NULL,
+    application_number VARCHAR(50),
+    status VARCHAR(50) NOT NULL,
+    total_cost DECIMAL(15,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(patent_id, country_code)
+);
+
+-- 비용 내역
+CREATE TABLE cost_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patent_id UUID REFERENCES patents(id) ON DELETE CASCADE,
+    cost_type VARCHAR(50) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'KRW',
+    payment_date DATE,
+    payment_status VARCHAR(50),
+    erp_transaction_id VARCHAR(100),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 첨부파일
+CREATE TABLE attachments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patent_id UUID REFERENCES patents(id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size BIGINT NOT NULL,
+    uploaded_by UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 알림
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 인덱스 생성
+CREATE INDEX idx_patents_status ON patents(status);
+CREATE INDEX idx_patents_application_date ON patents(application_date);
+CREATE INDEX idx_cost_items_patent_id ON cost_items(patent_id);
+CREATE INDEX idx_notifications_user_is_read ON notifications(user_id, is_read);
+```
+
+---
+
+## 4. API 명세
+
+### 4.1 인증 API
+
+```typescript
+POST /api/v1/auth/login
+Request: { username: string, password: string }
+Response: { accessToken: string, refreshToken: string, user: User }
+
+POST /api/v1/auth/refresh
+Request: { refreshToken: string }
+Response: { accessToken: string }
+
+POST /api/v1/auth/logout
+Headers: Authorization: Bearer {token}
+Response: { message: "Logged out successfully" }
+```
+
+### 4.2 특허 API
+
+```typescript
+// 특허 목록
+GET /api/v1/patents?page=1&limit=10&search=검색어&status=REGISTERED
+Response: {
+  data: Patent[],
+  total: number,
+  page: number,
+  limit: number
+}
+
+// 특허 상세
+GET /api/v1/patents/:id
+Response: {
+  ...Patent,
+  internationalApplications: [],
+  attachments: [],
+  costItems: []
+}
+
+// 특허 생성
+POST /api/v1/patents
+Request: {
+  applicationNumber: string,
+  title: string,
+  applicationDate: Date
+}
+Response: Patent
+
+// 특허 수정
+PUT /api/v1/patents/:id
+Request: Partial<Patent>
+Response: Patent
+
+// 특허 삭제
+DELETE /api/v1/patents/:id
+Response: { message: "삭제 완료" }
+```
+
+### 4.3 대시보드 API
+
+```typescript
+GET /api/v1/dashboard/statistics
+Response: {
+  domestic: {
+    total: number,
+    byStage: { PREPARING: 1, APPLIED: 1, ... }
+  },
+  international: {
+    total: number,
+    byCountry: { US: 5, CN: 3, ... }
+  }
+}
+
+GET /api/v1/dashboard/trends?period=6months
+Response: {
+  labels: string[],
+  datasets: {
+    applications: number[],
+    registrations: number[]
+  }
+}
+```
+
+---
+
+## 5. 주요 기능 구현
+
+### 5.1 Backend 구조
+
+```
+backend/src/
+├── main.ts
+├── app.module.ts
+├── modules/
+│   ├── auth/
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── jwt.strategy.ts
+│   │   └── dto/
+│   ├── users/
+│   ├── patents/
+│   │   ├── patents.controller.ts
+│   │   ├── patents.service.ts
+│   │   ├── entities/
+│   │   │   ├── patent.entity.ts
+│   │   │   └── international-application.entity.ts
+│   │   └── dto/
+│   ├── dashboard/
+│   ├── costs/
+│   └── notifications/
+└── integrations/
+    ├── kipris/
+    ├── erp/
+    └── approval/
+```
+
+### 5.2 핵심 Entity 예시
+
+```typescript
+// patent.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+
+@Entity('patents')
+export class Patent {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ unique: true })
+  applicationNumber: string;
+
+  @Column()
+  title: string;
+
+  @Column({ type: 'date' })
+  applicationDate: Date;
+
+  @Column()
+  status: string;
+
+  @ManyToOne(() => User)
+  applicant: User;
+
+  @OneToMany(() => InternationalApplication, ia => ia.patent)
+  internationalApplications: InternationalApplication[];
+
+  @OneToMany(() => CostItem, cost => cost.patent)
+  costItems: CostItem[];
+}
+```
+
+### 5.3 Service 예시
+
+```typescript
+// patents.service.ts
+@Injectable()
+export class PatentsService {
+  constructor(
+    @InjectRepository(Patent)
+    private patentRepo: Repository<Patent>
+  ) {}
+
+  async findAll(filters: FilterDto): Promise<PaginatedResult<Patent>> {
+    const qb = this.patentRepo.createQueryBuilder('patent')
+      .leftJoinAndSelect('patent.applicant', 'applicant');
+    
+    if (filters.search) {
+      qb.where('patent.title LIKE :search', { search: `%${filters.search}%` });
+    }
+    
+    const [data, total] = await qb
+      .skip((filters.page - 1) * filters.limit)
+      .take(filters.limit)
+      .getManyAndCount();
+    
+    return { data, total };
+  }
+}
+```
+
+### 5.4 KIPRIS API 연동
+
+```typescript
+// kipris.service.ts
+@Injectable()
+export class KiprisService {
+  private readonly client: AxiosInstance;
+  
+  constructor(private config: ConfigService) {
+    this.client = axios.create({
+      baseURL: 'https://plus.kipris.or.kr/openapi/rest',
+      params: { ServiceKey: config.get('KIPRIS_API_KEY') }
+    });
+  }
+
+  async getPatentInfo(applicationNumber: string) {
+    const response = await this.client.get('/patUtiModInfoSearchService/applNumberSearchInfo', {
+      params: { applicationNumber }
+    });
+    
+    return this.parseKiprisData(response.data);
+  }
+
+  @Cron('0 2 * * *')  // 매일 새벽 2시
+  async syncAllPatents() {
+    const patents = await this.patentRepo.find();
+    for (const patent of patents) {
+      await this.syncPatent(patent.id);
+    }
+  }
+}
+```
+
+### 5.5 Frontend 예시
+
+```typescript
+// Dashboard.tsx
+export const Dashboard: React.FC = () => {
+  const { data, isLoading } = useGetDashboardStatisticsQuery();
+
+  return (
+    <Grid container spacing={3}>
+      <Grid item xs={6}>
+        <Card>
+          <CardContent>
+            <Typography variant="h6">국내특허</Typography>
+            <Typography variant="h3">총 {data?.domestic.total}건</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      
+      <Grid item xs={12}>
+        <PatentTable />
+      </Grid>
+    </Grid>
+  );
+};
+
+// RTK Query
+export const dashboardApi = createApi({
+  reducerPath: 'dashboardApi',
+  baseQuery: fetchBaseQuery({ baseUrl: '/api/v1/dashboard' }),
+  endpoints: (builder) => ({
+    getDashboardStatistics: builder.query<Statistics, void>({
+      query: () => '/statistics'
+    })
+  })
+});
+```
+
+---
+
+## 6. 배포 및 인프라
+
+### 6.1 Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: patent_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+```
+
+### 6.2 환경 변수 (.env)
+
+```env
+NODE_ENV=production
+PORT=3000
+
+DB_HOST=postgres
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your-secure-password
+DB_DATABASE=patent_management
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+JWT_EXPIRATION=1h
+
+S3_ENDPOINT=http://minio:9000
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+S3_BUCKET=patent-files
+
+KIPRIS_API_KEY=your-kipris-api-key
+ERP_API_URL=http://erp.company.com/api
+ERP_API_TOKEN=your-erp-token
+```
+
+---
+
+## 7. 테스트 전략
+
+### 7.1 Unit Test
+
+```typescript
+describe('PatentsService', () => {
+  let service: PatentsService;
+  
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [PatentsService, ...]
+    }).compile();
+    
+    service = module.get(PatentsService);
+  });
+
+  it('should create patent', async () => {
+    const dto = { applicationNumber: 'TEST-001', ... };
+    const result = await service.create(dto, user);
+    expect(result.applicationNumber).toBe('TEST-001');
+  });
+});
+```
+
+### 7.2 E2E Test
+
+```typescript
+describe('Patents (e2e)', () => {
+  it('POST /patents', () => {
+    return request(app.getHttpServer())
+      .post('/patents')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicationNumber: 'E2E-001', ... })
+      .expect(201);
+  });
+});
+```
+
+---
+
+## 8. 보안 및 성능
+
+### 8.1 보안 체크리스트
+- ✅ SQL Injection 방지 (TypeORM 파라미터 바인딩)
+- ✅ XSS 방지 (입력 값 sanitization)
+- ✅ CSRF 보호
+- ✅ Rate Limiting
+- ✅ JWT 토큰 보안
+- ✅ 비밀번호 암호화 (bcrypt)
+- ✅ HTTPS 강제
+- ✅ CORS 설정
+
+### 8.2 성능 최적화
+- 데이터베이스 인덱스 최적화
+- Redis 캐싱 전략
+- API 응답 페이징
+- 파일 업로드 청킹
+- CDN 활용 (정적 파일)
+- DB Connection Pool 설정
+
+---
+
+## 9. 개발 가이드
+
+### 9.1 로컬 개발 환경 구축
+
+```bash
+# 1. Repository Clone
+git clone https://github.com/company/patent-management.git
+cd patent-management
+
+# 2. Backend 설정
+cd backend
+npm install
+cp .env.example .env  # 환경 변수 수정
+npm run migration:run
+npm run seed
+npm run start:dev
+
+# 3. Frontend 설정
+cd ../frontend
+npm install
+cp .env.example .env
+npm run dev
+
+# 4. Docker로 전체 실행
+docker-compose up -d
+```
+
+### 9.2 개발 워크플로우
+
+1. **Feature 브랜치 생성**
+```bash
+git checkout -b feature/특허-목록-필터링
+```
+
+2. **개발 진행**
+- Backend: `backend/src/modules/patents/`에서 작업
+- Frontend: `frontend/src/pages/PatentList/`에서 작업
+
+3. **테스트 작성 및 실행**
+```bash
+npm run test        # Unit test
+npm run test:e2e    # E2E test
+```
+
+4. **커밋 및 PR**
+```bash
+git add .
+git commit -m "feat: 특허 목록 필터링 기능 추가"
+git push origin feature/특허-목록-필터링
+```
+
+### 9.3 AI 코딩 도구 활용 가이드
+
+**이 명세서를 AI 도구에 제공하는 방법**:
+
+1. **Gemini Code Assist / Claude Code**
+```
+"이 개발명세서를 기반으로 특허관리 시스템 Backend를 구현해주세요.
+먼저 프로젝트 초기화부터 시작하겠습니다."
+```
+
+2. **단계별 개발 요청**
+```
+"1단계: NestJS 프로젝트 초기화 및 TypeORM 설정
+2단계: User, Patent Entity 생성
+3단계: Auth Module (JWT 인증) 구현
+4단계: Patent CRUD API 구현"
+```
+
+3. **특정 기능 구현**
+```
+"KIPRIS API 연동 서비스를 구현해주세요.
+- KiprisService 클래스 생성
+- API 클라이언트 설정
+- 특허 정보 조회 메서드
+- 스케줄 기반 동기화 작업"
+```
