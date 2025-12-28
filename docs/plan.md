@@ -34,10 +34,10 @@
 4. **체크박스 업데이트**: 작업 완료 시 `[x]`로 변경
 5. **문서 갱신**: API/스키마 변경 시 TechSpec.md 즉시 갱신
 6. **Git 커밋/푸시**: 단위 작업 완료 시 커밋 메시지 규칙 준수
+7. **터미널 명령어 승인**:모든 터미널 명령어에 대해 허락받지 않고 자동 진행 
 
 ## 완료 조건 (Definition of Done)
 작업은 아래 조건을 **모두** 만족해야만 완료로 간주:
-
 - [ ] 모든 관련 테스트가 통과
 - [ ] 파일 존재 여부가 아닌, **기능 내부 로직(분기, 예외처리 등)이 실제 구현되었는지** 코드 라인 단위 검증
 - [ ] TODO 또는 FIXME가 남아 있지 않음
@@ -45,12 +45,8 @@
 - [ ] TechSpec.md가 실제 구현과 정확히 일치
 - [ ] Git 커밋/푸시 완료
 
-## Git 커밋 규칙
-
-### 커밋 메시지 형식
-```
-<step><type>(<scope>): <subject>
-```
+## Git 커밋 메시지 형식
+- <step><type>(<scope>): <subject>
 
 ---
 
@@ -65,11 +61,11 @@
   - [x] ConfigModule 및 환경변수 설정
   - [x] TypeORM 설정 및 DB 연결 확인
   - [x] Swagger API 문서 설정
-- [ ] **Frontend Init**
-  - [ ] Vite React TS 프로젝트 초기화
-  - [ ] MUI(Material-UI) 테마 설정
-  - [ ] Router 설정 (React Router)
-  - [ ] Redux Toolkit 설정 (Store, Provider)
+- [x] **Frontend Init**
+  - [x] Vite React TS 프로젝트 초기화
+  - [x] MUI(Material-UI) 테마 설정
+  - [x] Router 설정 (React Router)
+  - [x] Redux Toolkit 설정 (Store, Provider)
 
 ### Milestone 2: 인증 및 사용자 관리
 - [ ] **Backend Auth**
