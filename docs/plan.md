@@ -60,11 +60,11 @@
 - [x] **Infrastructure Setup**
   - [x] `docker-compose.yml` 작성 (PostgreSQL, Redis, MinIO)
   - [x] 환경변수(`.env`) 템플릿 작성
-- [ ] **Backend Init**
-  - [ ] NestJS 프로젝트 초기화 (`npm install`)
-  - [ ] ConfigModule 및 환경변수 설정
-  - [ ] TypeORM 설정 및 DB 연결 확인
-  - [ ] Swagger API 문서 설정
+- [x] **Backend Init**
+  - [x] NestJS 프로젝트 초기화 (`npm install`)
+  - [x] ConfigModule 및 환경변수 설정
+  - [x] TypeORM 설정 및 DB 연결 확인
+  - [x] Swagger API 문서 설정
 - [ ] **Frontend Init**
   - [ ] Vite React TS 프로젝트 초기화
   - [ ] MUI(Material-UI) 테마 설정
