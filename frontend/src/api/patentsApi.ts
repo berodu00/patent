@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { RootState } from '../store';
+import type { RootState } from '../store';
 
 export interface Patent {
     id: string;
@@ -12,7 +12,6 @@ export interface Patent {
     applicant?: {
         id: string;
         email: string;
-        name: string;
     };
     created_at: string;
 }
@@ -37,7 +36,7 @@ export interface PatentListResponse {
 export const patentsApi = createApi({
     reducerPath: 'patentsApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'http://localhost:3000',
+        baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8005/api',
         prepareHeaders: (headers, { getState }) => {
             const token = (getState() as RootState).auth.token;
             if (token) {

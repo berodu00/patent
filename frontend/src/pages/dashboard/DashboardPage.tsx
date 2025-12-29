@@ -10,10 +10,13 @@ const DashboardPage = () => {
     const { data: trends, isLoading: trendsLoading } = useGetDashboardTrendsQuery();
 
     if (statsLoading || trendsLoading) return <Typography>Loading Dashboard...</Typography>;
+    // Safeguard agaist malformed data
+    const safeStats = stats || { totalPatents: 0, statusDistribution: {} };
+    const safeTrends = trends || [];
 
-    const pieData = stats?.statusDistribution ? Object.keys(stats.statusDistribution).map(key => ({
+    const pieData = safeStats.statusDistribution ? Object.keys(safeStats.statusDistribution).map(key => ({
         name: key,
-        value: stats.statusDistribution[key] || 0
+        value: safeStats.statusDistribution[key] || 0
     })) : [];
 
     return (
@@ -26,7 +29,7 @@ const DashboardPage = () => {
                     <Card>
                         <CardContent>
                             <Typography color="textSecondary" gutterBottom>Total Patents</Typography>
-                            <Typography variant="h3">{stats?.totalPatents || 0}</Typography>
+                            <Typography variant="h3">{safeStats.totalPatents || 0}</Typography>
                         </CardContent>
                     </Card>
                 </Box>
@@ -78,7 +81,7 @@ const DashboardPage = () => {
                     <Paper sx={{ p: 2 }}>
                         <Typography variant="h6" gutterBottom>Application Trends (Last 6 Months)</Typography>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={trends || []}>
+                            <BarChart data={safeTrends}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="name" />
                                 <YAxis />

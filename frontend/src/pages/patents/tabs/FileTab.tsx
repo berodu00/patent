@@ -52,7 +52,7 @@ const FileTab: React.FC<FileTabProps> = ({ patentId }) => {
 
     const handleDownload = async (attId: string, fileName: string) => {
         try {
-            const response = await fetch(`http://localhost:3000/patents/attachments/${attId}/download`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8005/api'}/patents/attachments/${attId}/download`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
